@@ -6,6 +6,8 @@ const ip = require('docker-ip');
 
 const pg = require('pg');
 const connString = `postgres://docker:docker@${ip()}:5050/docker`;
+const client = new pg.Client({ connectionString: connString });
+client.connect();
 
 const app = miniprofiler.express({
   enable: (req, res) => {
@@ -18,36 +20,23 @@ const server = http.createServer((request, response) => {
     require('../index.js')(pg).handler(request, response, () => {
 
       if (request.url == '/pg-select') {
-        pg.connect(connString, function(err, client, done) {
-          client.query('SELECT $1::int AS number', [ 3 ], function(err, result) {
-            response.end('');
-          });
-        });
+        client.query('SELECT $1::int AS number', [3])
+          .then(_ => response.end(''));
       }
 
       if (request.url == '/pg-select-event') {
-        pg.connect(connString, function(err, client, done) {
-          const query = client.query('SELECT $1::int AS number', [ 3 ]);
-          query.on('end', function() {
-            response.end('');
-          });
-        });
+        client.query('SELECT $1::int AS number', [3])
+          .then(_ => response.end(''));
       }
 
       if (request.url == '/insert') {
-        pg.connect(connString, function(err, client, done) {
-          client.query('INSERT INTO logs (name, date) VALUES ($1, $2)', [ 'MiniProfiler', new Date() ], function(err, result) {
-            response.end('');
-          });
-        });
+        client.query('INSERT INTO logs (name, date) VALUES ($1, $2)', ['MiniProfiler', new Date()])
+          .then(_ => response.end(''));
       }
 
       if (request.url == '/unprofiled') {
-        pg.connect(connString, function(err, client, done) {
-          client.query('SELECT $1::int AS number', ['123456'], function(err, result) {
-            response.end(result.rows[0].number.toString());
-          });
-        });
+        client.query('SELECT $1::int AS number', ['123456'])
+          .then(res => response.end(res.rows[0].number.toString()));
       }
 
     });
