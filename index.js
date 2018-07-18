@@ -14,9 +14,12 @@ module.exports = function(pg) {
           req.miniprofiler.timeQuery('sql', config.toString(), pgQuery.bind(this), config, values, callback);
         } else {
           const timing = req.miniprofiler.startTimeQuery('sql', config.toString());
-          const query = pgQuery.call(this, config, values, callback);
-          query.then(() => req.miniprofiler.stopTimeQuery(timing));
-          return query;
+          return pgQuery
+            .call(this, config, values, callback)
+            .then((res) => {
+              req.miniprofiler.stopTimeQuery(timing);
+              return res;
+            });
         }
       };
 
