@@ -1,23 +1,42 @@
 'use strict';
 
+const asyncHooks = require('async_hooks');
+
 let pgQuery;
+const reqAsyncCxt = new Map();
+
+asyncHooks.createHook({
+  init(id, type, triggerId) {
+    if (type === 'PROMISE' && reqAsyncCxt.has(triggerId))
+      reqAsyncCxt.set(id, reqAsyncCxt.get(triggerId));
+  },
+  destroy(id) {
+    reqAsyncCxt.delete(id);
+  },
+}).enable();
+
+function getReq() {
+  return reqAsyncCxt.get(asyncHooks.executionAsyncId());
+}
 
 module.exports = function(pg) {
   pgQuery = pgQuery || pg.Client.prototype.query;
 
   return {
     name: 'pg',
-    handler: function(req, res, next) {
+    handler: function(req, _res, next) {
+      reqAsyncCxt.set(asyncHooks.executionAsyncId(), req);
+      if (!req.miniprofiler || !req.miniprofiler.enabled || pg.Client.prototype.query !== pgQuery) return next();
 
-      pg.Client.prototype.query = !req.miniprofiler || !req.miniprofiler.enabled ? pgQuery : function(config, values, callback) {
+      pg.Client.prototype.query = function(config, values, callback) {
         if (callback) {
-          req.miniprofiler.timeQuery('sql', config.toString(), pgQuery.bind(this), config, values, callback);
+          getReq().miniprofiler.timeQuery('sql', config.toString(), pgQuery.bind(this), config, values, callback);
         } else {
-          const timing = req.miniprofiler.startTimeQuery('sql', config.toString());
+          const timing = getReq().miniprofiler.startTimeQuery('sql', config.toString());
           return pgQuery
             .call(this, config, values, callback)
             .then((res) => {
-              req.miniprofiler.stopTimeQuery(timing);
+              getReq().miniprofiler.stopTimeQuery(timing);
               return res;
             });
         }
