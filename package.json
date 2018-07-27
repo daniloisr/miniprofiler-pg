@@ -30,6 +30,9 @@
     "sql",
     "postgres"
   ],
+  "engines": {
+    "node": ">= 8.6.0"
+  },
   "devDependencies": {
     "chai": "^3.5.0",
     "coveralls": "^2.11.9",
