@@ -8,11 +8,11 @@ const pg = require('pg');
 const connString = `postgres://docker:docker@${ip()}:5050/docker`;
 const client = new pg.Client({ connectionString: connString });
 client.connect();
+client.query('create table if not exists logs(name varchar(256), date date);');
 
 const app = miniprofiler.express({
-  enable: (req, res) => {
-    return !req.url.startsWith('/unprofiled');
-  }
+  enable: (req, _res) => !req.url.startsWith('/unprofiled'),
+  use: [require('../index.js')(pg)]
 });
 
 const server = http.createServer((request, response) => {

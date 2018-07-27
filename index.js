@@ -2,20 +2,16 @@
 
 const asyncHooks = require('async_hooks');
 
-function installHook(ctx) {
-  const init = (id, type, triggerId) => {
-    if (type === 'PROMISE' && ctx.map.has(triggerId))
-      ctx.map.set(id, ctx.map.get(triggerId));
-  };
-  const destroy = (id) => ctx.map.delete(id);
-
-  asyncHooks.createHook({ init, destroy }).enable();
-}
-
 class AsyncContext {
   constructor() {
     this.map = new Map();
-    installHook(this);
+    asyncHooks.createHook({
+      init: (id, type, triggerId) => {
+        if (type === 'PROMISE' && this.map.has(triggerId))
+          this.map.set(id, this.map.get(triggerId));
+      },
+      destroy: (id) => this.map.delete(id)
+    }).enable();
   }
 
   get miniprofiler() {
@@ -43,7 +39,7 @@ module.exports = function(pg) {
 
       pgQuery = pgQuery || pg.Client.prototype.query;
       pg.Client.prototype.query = function(config, values, callback) {
-        if (!asyncCtx.miniprofiler || !asyncCtx.miniprofiler.enabled || pg.Client.prototype.query !== pgQuery)
+        if (!asyncCtx.miniprofiler || !asyncCtx.miniprofiler.enabled)
           return pgQuery.call(this, ...arguments);
 
         if (callback) {
