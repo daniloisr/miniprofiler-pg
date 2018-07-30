@@ -39,7 +39,7 @@
     "docker-ip": "^2.0.1",
     "eslint": "^3.0.1",
     "istanbul": "^0.4.4",
-    "miniprofiler": "^1.2.0",
+    "miniprofiler": "daniloisr/miniprofiler-node#add-async-context",
     "mocha": "^2.5.3",
     "pg": "^7.4.3",
     "request": "^2.72.0"

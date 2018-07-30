@@ -10,36 +10,34 @@ const client = new pg.Client({ connectionString: connString });
 client.connect();
 client.query('create table if not exists logs(name varchar(256), date date);');
 
-const app = miniprofiler.express({
-  enable: (req, _res) => !req.url.startsWith('/unprofiled'),
-  use: [require('../index.js')(pg)]
-});
-
 const server = http.createServer((request, response) => {
+  response.locals = response.locals || {};
+
+  const app = miniprofiler.express({
+    enable: (req, _res) => !req.url.startsWith('/unprofiled'),
+    providers: [require('../index.js')(pg)]
+  });
+
   app(request, response, () => {
-    require('../index.js')(pg).handler(request, response, () => {
+    if (request.url == '/pg-select') {
+      client.query('SELECT $1::int AS number', [3])
+        .then(_ => response.end(''));
+    }
 
-      if (request.url == '/pg-select') {
-        client.query('SELECT $1::int AS number', [3])
-          .then(_ => response.end(''));
-      }
+    if (request.url == '/pg-select-event') {
+      client.query('SELECT $1::int AS number', [3])
+        .then(_ => response.end(''));
+    }
 
-      if (request.url == '/pg-select-event') {
-        client.query('SELECT $1::int AS number', [3])
-          .then(_ => response.end(''));
-      }
+    if (request.url == '/insert') {
+      client.query('INSERT INTO logs (name, date) VALUES ($1, $2)', ['MiniProfiler', new Date()])
+        .then(_ => response.end(''));
+    }
 
-      if (request.url == '/insert') {
-        client.query('INSERT INTO logs (name, date) VALUES ($1, $2)', ['MiniProfiler', new Date()])
-          .then(_ => response.end(''));
-      }
-
-      if (request.url == '/unprofiled') {
-        client.query('SELECT $1::int AS number', ['123456'])
-          .then(res => response.end(res.rows[0].number.toString()));
-      }
-
-    });
+    if (request.url == '/unprofiled') {
+      client.query('SELECT $1::int AS number', ['123456'])
+        .then(res => response.end(res.rows[0].number.toString()));
+    }
   });
 });
 
