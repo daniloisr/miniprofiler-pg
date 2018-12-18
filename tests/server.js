@@ -1,6 +1,6 @@
 'use strict';
 
-const miniprofiler = require('miniprofiler');
+const miniprofiler = require('@daniloisr/miniprofiler');
 const http = require('http');
 const ip = require('docker-ip');
 
@@ -19,7 +19,7 @@ const app = miniprofiler.express({
 
 const server = http.createServer((request, response) => {
   app(request, response, () => {
-    require('../index.js')(pg).handler(request, response, () => {
+    miniprofiler.express.for(require('../index.js')(pg))(request, response, () => {
 
       if (request.url == '/pg-select') {
         client

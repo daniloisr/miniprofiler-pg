@@ -7,19 +7,18 @@ module.exports = function(pg) {
 
   return {
     name: 'pg',
-    handler: function(req, res, next) {
-
-      pg.Client.prototype.query = !req.miniprofiler || !req.miniprofiler.enabled ? pgQuery : function(config, values, callback) {
+    handler: function(asyncContext, next) {
+      pg.Client.prototype.query = !asyncContext.get() || !asyncContext.get().enabled ? pgQuery : function(config, values, callback) {
         if (callback) {
-          req.miniprofiler.timeQuery('sql', config.toString(), pgQuery.bind(this), config, values, callback);
+          asyncContext.get().timeQuery('sql', config.toString(), pgQuery.bind(this), config, values, callback);
           return;
         }
 
-        const timing = req.miniprofiler.startTimeQuery('sql', config.toString());
+        const timing = asyncContext.get().startTimeQuery('sql', config.toString());
         const query = pgQuery.call(this, config, values, callback);
 
         return query.then(result => {
-          req.miniprofiler.stopTimeQuery(timing);
+          asyncContext.get().stopTimeQuery(timing);
           return result;
         });
       };

@@ -1,6 +1,6 @@
 {
-  "name": "miniprofiler-pg",
-  "version": "2.0.0",
+  "name": "@daniloisr/miniprofiler-pg",
+  "version": "3.0.0",
   "description": "A postgres provider for miniprofiler timing analysis",
   "main": "index.js",
   "scripts": {
@@ -36,7 +36,7 @@
     "docker-ip": "^2.0.1",
     "eslint": "^3.0.1",
     "istanbul": "^0.4.4",
-    "miniprofiler": "^1.2.0",
+    "@daniloisr/miniprofiler": "^3.0.0",
     "mocha": "^2.5.3",
     "pg": "^7.6.1",
     "request": "^2.72.0"
