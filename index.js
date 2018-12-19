@@ -9,6 +9,11 @@ module.exports = function(pg) {
     name: 'pg',
     handler: function(asyncContext, next) {
       pg.Client.prototype.query = !asyncContext.get() || !asyncContext.get().enabled ? pgQuery : function(config, values, callback) {
+        // WIP: handle an "async_hook" bug on Macs
+        if (!asyncContext.get()) {
+          return pgQuery.apply(this, arguments);
+        }
+
         if (callback) {
           asyncContext.get().timeQuery('sql', config.toString(), pgQuery.bind(this), config, values, callback);
           return;

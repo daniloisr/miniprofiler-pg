@@ -1,6 +1,6 @@
 {
   "name": "@daniloisr/miniprofiler-pg",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "A postgres provider for miniprofiler timing analysis",
   "main": "index.js",
   "scripts": {
